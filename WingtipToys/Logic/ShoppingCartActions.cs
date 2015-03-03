@@ -28,6 +28,7 @@ namespace WingtipToys.Logic
                 {
                     ItemId = Guid.NewGuid().ToString(),
                     ProductId = id,
+                    CartId = ShoppingCartId,
                     Product = _db.Products.SingleOrDefault(p => p.ProductID == id),
                     Quantity = 1,
                     DateCreated = DateTime.Now
