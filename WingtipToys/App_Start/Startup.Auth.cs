@@ -64,6 +64,8 @@ namespace WingtipToys
             //    ClientId = "",
             //    ClientSecret = ""
             //});
+
+            app.UseGoogleAuthentication();
         }
     }
 }
