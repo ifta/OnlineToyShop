@@ -16,5 +16,8 @@ namespace WingtipToys.Models
         public DbSet<Product> Products { get; set; }
 
         public DbSet<CartItem> ShoppingCartItems { get; set; }
+
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderDetail> OrderDetails { get; set; }
     }
 }
