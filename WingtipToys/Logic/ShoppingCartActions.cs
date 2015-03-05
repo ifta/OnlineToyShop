@@ -19,9 +19,9 @@ namespace WingtipToys.Logic
             //Retrieve the product from database
             ShoppingCartId = GetCartId();
 
-            var cartItem = _db.ShoppingCartItems.SingleOrDefault( c => c.CartId == ShoppingCartId && c.ProductId == id);
+            var cartItem = _db.ShoppingCartItems.SingleOrDefault(c => c.CartId == ShoppingCartId && c.ProductId == id);
 
-            if(cartItem == null)
+            if (cartItem == null)
             {
                 //Create a new cart item If no cart Item exist
                 cartItem = new CartItem
@@ -42,10 +42,10 @@ namespace WingtipToys.Logic
                 cartItem.Quantity++;
             }
             _db.SaveChanges();
-        } 
+        }
         //End of AddToCart function
 
-        public void Dispose() 
+        public void Dispose()
         {
             if (_db != null)
             {
@@ -54,7 +54,7 @@ namespace WingtipToys.Logic
             }
         }
 
-        public string GetCartId() 
+        public string GetCartId()
         {
             if (HttpContext.Current.Session[CartSessionKey] == null)
             {
@@ -62,7 +62,7 @@ namespace WingtipToys.Logic
                 {
                     HttpContext.Current.Session[CartSessionKey] = HttpContext.Current.User.Identity.Name;
                 }
-                else 
+                else
                 {
                     //Generate a new Random GUID using System.Guid Class
                     Guid tempCartId = Guid.NewGuid();
@@ -74,7 +74,7 @@ namespace WingtipToys.Logic
         }
         // End of GetCartId function
 
-        public List<CartItem> GetCartItems() 
+        public List<CartItem> GetCartItems()
         {
             ShoppingCartId = GetCartId();
 
@@ -95,6 +95,130 @@ namespace WingtipToys.Logic
                                select (int?)cartItems.Quantity * cartItems.Product.UnitPrice).Sum();
 
             return total ?? decimal.Zero;
+        }//End of GetTotal
+
+        public ShoppingCartActions GetCart(HttpContext context)
+        {
+            using (var cart = new ShoppingCartActions())
+            {
+                cart.ShoppingCartId = cart.GetCartId();
+                return cart;
+            }
+        }//End of GetCart
+
+        public void UpdateShoppingCartDatabase(string cartId, ShoppingCartUpdates[] CartItemUpdates)
+        {
+            using (var db = new WingtipToys.Models.ProductContext())
+            {
+                try
+                {
+                    int CartItemCount = CartItemUpdates.Count();
+                    List<CartItem> myCart = GetCartItems();
+                    foreach (var cartItem in myCart)
+                    {
+                        // Iterate through all rows within shopping cart lis
+                        for (int i = 0; i < CartItemCount; i++)
+                        {
+                            if (cartItem.Product.ProductID == CartItemUpdates[i].ProductId)
+                            {
+                                if (CartItemUpdates[i].PurchaseQuantity < 1 || CartItemUpdates[i].RemoveItem == true)
+                                {
+                                    RemoveItem(cartId, cartItem.ProductId);
+                                }
+                                else
+                                {
+                                    UpdateItem(cartId, cartItem.ProductId, CartItemUpdates[i].PurchaseQuantity);
+                                }
+                            }
+
+                        }
+                    }
+                }
+                catch (Exception Exp)
+                {
+
+                    throw new Exception("Error : unable to update Cart Database - " + Exp.Message.ToString(), Exp);
+                }
+            }
+        } //End of UpdateShoppingCartDatabase
+
+        public void RemoveItem(string removeCartID, int removeProductID)
+        {
+            using (var _db = new WingtipToys.Models.ProductContext())
+            {
+                try
+                {
+                    var myItem = (from c in _db.ShoppingCartItems
+                                  where c.CartId == removeCartID && c.Product.ProductID == removeProductID
+                                  select c).FirstOrDefault();
+
+                    if (myItem != null)
+                    {
+                        //Remove Item
+                        _db.ShoppingCartItems.Remove(myItem);
+                        _db.SaveChanges();
+                    }
+                }
+                catch (Exception exp)
+                {
+
+                    throw new Exception("Error: Unable to remove Cart Item - " + exp.Message.ToString(), exp);
+                }
+            }
+
+        } //End of RemoveItem 
+
+        public void UpdateItem(string updateCartID, int updateProductID, int quantity)
+        {
+            using (var _db = new WingtipToys.Models.ProductContext())
+            {
+                try
+                {
+                    var myItem = (from c in _db.ShoppingCartItems
+                                  where c.CartId == updateCartID && c.Product.ProductID == updateProductID
+                                  select c).FirstOrDefault();
+                    if (myItem != null) 
+                    {
+                        myItem.Quantity = quantity; 
+                        _db.SaveChanges(); 
+                    }
+                }
+                catch (Exception exp)
+                {
+
+                    throw new Exception("Error: Unable to Update Cart Item - " + exp.Message.ToString(), exp); ;
+                }
+            }
+        }//End of UpdateItem
+
+        public void EmptyCart()
+        {
+            ShoppingCartId = GetCartId();
+            var cartItems = _db.ShoppingCartItems.Where( c => c.CartId == ShoppingCartId);
+            foreach (var cartItem in cartItems)
+            {
+                _db.ShoppingCartItems.Remove(cartItem);
+            }
+            _db.SaveChanges();
+        }//End of EmptyCart
+
+        public int GetCount()
+        {
+            ShoppingCartId = GetCartId();
+            // Get the count of each item in the cart and sum them up 
+            int? count = (from cartItems
+                              in _db.ShoppingCartItems
+                          where cartItems.CartId == ShoppingCartId
+                          select (int?)cartItems.Quantity).Sum();
+            // Return 0 if all entries are null
+            return count ?? 0;
+        }//End of GetCount
+
+        public struct ShoppingCartUpdates 
+        {
+            public int ProductId; 
+            public int PurchaseQuantity; 
+            public bool RemoveItem;
         }
     }
 }
