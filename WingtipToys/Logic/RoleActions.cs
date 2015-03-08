@@ -40,19 +40,19 @@ namespace WingtipToys.Logic
             // a single line of code, rather than using multiple lines of code, as you did 
             // for the RoleManager object.
             var userMgr = new UserManager<ApplicationUser>(new UserStore<ApplicationUser>(context));
-            var appUser = new ApplicationUser() 
+            var appUser = new ApplicationUser()
             {
-                UserName = "Admin", 
+                UserName = "Admin",
             };
-            
-            IdUserResult = userMgr.Create(appUser, "Pa$$word"); 
-            
+
+            IdUserResult = userMgr.Create(appUser, "Pa$$word");
+
             // If the new "Admin" user was successfully created, 
             // add the "Admin" user to the "Administrator" role.
             if (IdUserResult.Succeeded)
             {
-                IdUserResult = userMgr.AddToRole(appUser.Id, "Administrator"); 
-                if (!IdUserResult.Succeeded) 
+                IdUserResult = userMgr.AddToRole(appUser.Id, "Administrator");
+                if (!IdUserResult.Succeeded)
                 {
                     // Handle the error condition if there's a problem adding the user to the role.
                 }
