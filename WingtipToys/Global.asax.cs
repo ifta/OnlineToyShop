@@ -23,7 +23,8 @@ namespace WingtipToys
             //Initialize the product Database
             Database.SetInitializer(new ProductDatabaseInitializer());
 
-            //Create the Administrator role and user.
+            //-----Create the Administrator role and user.
+            
             RoleActions roleActions = new RoleActions();
             roleActions.createAdmin();
         }
